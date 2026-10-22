@@ -1,0 +1,530 @@
+-- [[ FA Hub - Universe God Edition (Fixed & Safe Execution) ]] --
+
+local Players = game:GetService("Players")
+local HttpService = game:GetService("HttpService")
+local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+local MarketplaceService = game:GetService("MarketplaceService")
+local Lighting = game:GetService("Lighting")
+local LocalPlayer = Players.LocalPlayer
+local Workspace = game:GetService("Workspace")
+
+-- 📌 1. Webhook Configuration (Safe Pcall)
+local WEBHOOK_URL = "https://discord.com/api/webhooks/1558080999038918680/0qXXJLbttTw50-w6i1pRlpkjN3CIg9tLIr2P1X5gi-DLTU9aAePM0PZIbFvWHfy36tld"
+
+local function sendWebhookNotification()
+    pcall(function()
+        if WEBHOOK_URL == "" then return end
+        local httpRequest = (syn and syn.request) or (http and http.request) or http_request or request
+        if httpRequest then
+            local success, gameName = pcall(function()
+                return MarketplaceService:GetProductInfo(game.PlaceId).Name
+            end)
+            gameName = success and gameName or "Unknown Game"
+
+            local data = {
+                ["embeds"] = {{
+                    ["title"] = "🚀 FA Hub Universe Fixed Edition Executed!",
+                    ["color"] = 65280,
+                    ["fields"] = {
+                        { ["name"] = "👤 Player", ["value"] = LocalPlayer.Name .. " (" .. LocalPlayer.DisplayName .. ")", ["inline"] = true },
+                        { ["name"] = "🆔 User ID", ["value"] = tostring(LocalPlayer.UserId), ["inline"] = true },
+                        { ["name"] = "🎮 Game Name", ["value"] = gameName .. " (" .. tostring(game.PlaceId) .. ")", ["inline"] = false },
+                        { ["name"] = "🔗 Profile Link", ["value"] = "https://www.roblox.com/users/" .. LocalPlayer.UserId .. "/profile", ["inline"] = false }
+                    },
+                    ["footer"] = { ["text"] = "FA Hub System • " .. os.date("%Y-%m-%d %H:%M:%S") }
+                }}
+            }
+            httpRequest({
+                Url = WEBHOOK_URL,
+                Method = "POST",
+                Headers = { ["Content-Type"] = "application/json" },
+                Body = HttpService:JSONEncode(data)
+            })
+        end
+    end)
+end
+
+task.spawn(sendWebhookNotification)
+
+-- 📌 2. Core Variables & Systems
+local currentSpeed = 16
+local currentJump = 50
+local isSpeedEnabled = false
+local isJumpEnabled = false
+local currentPerspective = "Normal"
+local cameraConnection = nil
+local noclipEnabled = false
+local noclipConnection = nil
+local activePoseConnection = nil
+
+local infJumpEnabled = false
+local godModeEnabled = false
+local espEnabled = false
+local espHighlights = {}
+local flyEnabled = false
+local flyConnection = nil
+local fullbrightEnabled = false
+local spinbotEnabled = false
+local spinConnection = nil
+local autoClickerEnabled = false
+local rainbowEnabled = false
+local rainbowConnection = nil
+local invisibleEnabled = false
+
+-- Infinite Jump Listener
+UserInputService.JumpRequest:Connect(function()
+    if infJumpEnabled and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
+        LocalPlayer.Character.Humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+    end
+end)
+
+-- God Mode & Rainbow Loop
+RunService.Stepped:Connect(function()
+    pcall(function()
+        if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
+            if godModeEnabled then
+                LocalPlayer.Character.Humanoid.Health = LocalPlayer.Character.Humanoid.MaxHealth
+            end
+        end
+        if autoClickerEnabled and mouse1click then
+            pcall(mouse1click)
+        end
+    end)
+end)
+
+-- Rainbow Character System
+local function toggleRainbow(state)
+    rainbowEnabled = state
+    if rainbowConnection then
+        rainbowConnection:Disconnect()
+        rainbowConnection = nil
+    end
+    if rainbowEnabled then
+        rainbowConnection = RunService.RenderStepped:Connect(function()
+            pcall(function()
+                if LocalPlayer.Character then
+                    local hue = tick() % 5 / 5
+                    local color = Color3.fromHSV(hue, 1, 1)
+                    for _, part in ipairs(LocalPlayer.Character:GetDescendants()) do
+                        if part:IsA("BasePart") then
+                            part.Color = color
+                        end
+                    end
+                end
+            end)
+        end)
+    end
+end
+
+-- Invisible System
+local function toggleInvisible(state)
+    invisibleEnabled = state
+    pcall(function()
+        if LocalPlayer.Character then
+            for _, part in ipairs(LocalPlayer.Character:GetDescendants()) do
+                if part:IsA("BasePart") or part:IsA("Decal") then
+                    part.Transparency = invisibleEnabled and 1 or 0
+                end
+            end
+        end
+    end)
+end
+
+-- Spinbot System
+local function toggleSpinbot(state)
+    spinbotEnabled = state
+    if spinConnection then
+        spinConnection:Disconnect()
+        spinConnection = nil
+    end
+    if spinbotEnabled then
+        spinConnection = RunService.RenderStepped:Connect(function()
+            pcall(function()
+                if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+                    local root = LocalPlayer.Character.HumanoidRootPart
+                    root.CFrame = root.CFrame * CFrame.Angles(0, math.rad(25), 0)
+                end
+            end)
+        end)
+    end
+end
+
+-- Fly Mode System
+local function toggleFly(state)
+    flyEnabled = state
+    if flyConnection then
+        flyConnection:Disconnect()
+        flyConnection = nil
+    end
+
+    if flyEnabled then
+        local camera = Workspace.CurrentCamera
+        flyConnection = RunService.RenderStepped:Connect(function()
+            pcall(function()
+                if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") and LocalPlayer.Character:FindFirstChild("Humanoid") then
+                    local rootPart = LocalPlayer.Character.HumanoidRootPart
+                    local humanoid = LocalPlayer.Character.Humanoid
+                    humanoid.PlatformStand = true
+                    
+                    local moveDirection = Vector3.new()
+                    if UserInputService:IsKeyDown(Enum.KeyCode.W) then moveDirection = moveDirection + camera.CFrame.LookVector end
+                    if UserInputService:IsKeyDown(Enum.KeyCode.S) then moveDirection = moveDirection - camera.CFrame.LookVector end
+                    if UserInputService:IsKeyDown(Enum.KeyCode.A) then moveDirection = moveDirection - camera.CFrame.RightVector end
+                    if UserInputService:IsKeyDown(Enum.KeyCode.D) then moveDirection = moveDirection + camera.CFrame.RightVector end
+
+                    if moveDirection.Magnitude > 0 then
+                        rootPart.Velocity = moveDirection.Unit * 50
+                    else
+                        rootPart.Velocity = Vector3.new(0, 0, 0)
+                    end
+                end
+            end)
+        end)
+    else
+        pcall(function()
+            if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
+                LocalPlayer.Character.Humanoid.PlatformStand = false
+            end
+        end)
+    end
+end
+
+-- Fullbright System
+local function toggleFullbright(state)
+    fullbrightEnabled = state
+    pcall(function()
+        if fullbrightEnabled then
+            Lighting.Brightness = 2
+            Lighting.ClockTime = 14
+            Lighting.FogEnd = 100000
+            Lighting.GlobalShadows = false
+        else
+            Lighting.Brightness = 1
+            Lighting.GlobalShadows = true
+        end
+    end)
+end
+
+-- Low Gravity
+local function setLowGravity(state)
+    pcall(function()
+        if state then Workspace.Gravity = 50 else Workspace.Gravity = 196.2 end
+    end)
+end
+
+-- Btools
+local function giveBtools()
+    pcall(function()
+        local tool = Instance.new("Tool")
+        tool.Name = "FA Btools (Delete Part)"
+        tool.RequiresHandle = false
+        tool.Parent = LocalPlayer.Backpack
+        tool.Activated:Connect(function()
+            local mouse = LocalPlayer:GetMouse()
+            if mouse.Target then
+                mouse.Target:Destroy()
+            end
+        end)
+    end)
+end
+
+local function applyStats(character)
+    pcall(function()
+        local humanoid = character:WaitForChild("Humanoid", 10)
+        if not humanoid then return end
+
+        if isSpeedEnabled then humanoid.WalkSpeed = currentSpeed end
+        if isJumpEnabled then
+            humanoid.UseJumpPower = true
+            humanoid.JumpPower = currentJump
+        end
+
+        humanoid:GetPropertyChangedSignal("WalkSpeed"):Connect(function()
+            if isSpeedEnabled and humanoid.WalkSpeed ~= currentSpeed then
+                humanoid.WalkSpeed = currentSpeed
+            end
+        end)
+        humanoid:GetPropertyChangedSignal("JumpPower"):Connect(function()
+            if isJumpEnabled and humanoid.JumpPower ~= currentJump then
+                humanoid.JumpPower = currentJump
+            end
+        end)
+    end)
+end
+
+if LocalPlayer.Character then applyStats(LocalPlayer.Character) end
+LocalPlayer.CharacterAdded:Connect(applyStats)
+
+-- Noclip
+local function toggleNoclip(state)
+    noclipEnabled = state
+    if noclipConnection then
+        noclipConnection:Disconnect()
+        noclipConnection = nil
+    end
+
+    if noclipEnabled then
+        noclipConnection = RunService.Stepped:Connect(function()
+            pcall(function()
+                if LocalPlayer.Character then
+                    for _, part in ipairs(LocalPlayer.Character:GetDescendants()) do
+                        if part:IsA("BasePart") then part.CanCollide = false end
+                    end
+                end
+            end)
+        end)
+    else
+        pcall(function()
+            if LocalPlayer.Character then
+                for _, part in ipairs(LocalPlayer.Character:GetDescendants()) do
+                    if part:IsA("BasePart") then
+                        if part.Name == "HumanoidRootPart" then part.CanCollide = false else part.CanCollide = true end
+                    end
+                end
+            end
+        end)
+    end
+end
+
+-- Teleport
+local function teleportToPlayer(targetName)
+    pcall(function()
+        local targetPlayer = nil
+        targetName = targetName:lower()
+        for _, player in ipairs(Players:GetPlayers()) do
+            if player.Name:lower():sub(1, #targetName) == targetName or player.DisplayName:lower():sub(1, #targetName) == targetName then
+                targetPlayer = player
+                break
+            end
+        end
+
+        if targetPlayer and targetPlayer.Character and targetPlayer.Character:FindFirstChild("HumanoidRootPart") then
+            if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+                LocalPlayer.Character.HumanoidRootPart.CFrame = targetPlayer.Character.HumanoidRootPart.CFrame + Vector3.new(0, 3, 0)
+            end
+        end
+    end)
+end
+
+-- Poses System
+local function stopAllPoses()
+    if activePoseConnection then
+        activePoseConnection:Disconnect()
+        activePoseConnection = nil
+    end
+end
+
+local function playCustomPose(poseType)
+    stopAllPoses()
+    local char = LocalPlayer.Character
+    if not char or not char:FindFirstChild("HumanoidRootPart") then return end
+    local rootPart = char.HumanoidRootPart
+
+    activePoseConnection = RunService.RenderStepped:Connect(function()
+        pcall(function()
+            if not char or not rootPart then return end
+            if poseType == "Aura" then
+                rootPart.CFrame = rootPart.CFrame * CFrame.Angles(0, 0, math.rad(3))
+            elseif poseType == "Chill" then
+                rootPart.CFrame = rootPart.CFrame * CFrame.Angles(math.rad(20), 0, 0)
+            elseif poseType == "Sigma" then
+                rootPart.CFrame = rootPart.CFrame * CFrame.Angles(0, 0, math.sin(tick() * 8) * 0.04)
+            elseif poseType == "Cross" then
+                rootPart.CFrame = rootPart.CFrame * CFrame.Angles(math.rad(5), math.rad(10), 0)
+            elseif poseType == "Look" then
+                rootPart.CFrame = rootPart.CFrame * CFrame.Angles(0, math.sin(tick() * 3) * 0.2, 0)
+            elseif poseType == "Stretch" then
+                rootPart.CFrame = rootPart.CFrame + Vector3.new(0, math.sin(tick() * 5) * 0.1, 0)
+            elseif poseType == "Confident" then
+                rootPart.CFrame = rootPart.CFrame * CFrame.Angles(math.rad(-5), 0, 0)
+            elseif poseType == "Aim" then
+                rootPart.CFrame = rootPart.CFrame * CFrame.Angles(0, math.rad(15), 0)
+            elseif poseType == "Wave" then
+                rootPart.CFrame = rootPart.CFrame * CFrame.Angles(math.sin(tick() * 6) * 0.05, 0, 0)
+            end
+        end)
+    end)
+end
+
+-- Camera Mode
+local function setCameraPerspective(mode)
+    currentPerspective = mode
+    local camera = Workspace.CurrentCamera
+    if not camera then return end
+
+    if cameraConnection then
+        cameraConnection:Disconnect()
+        cameraConnection = nil
+    end
+
+    pcall(function()
+        if mode == "1st" then
+            LocalPlayer.CameraMinZoomDistance = 0.5
+            LocalPlayer.CameraMaxZoomDistance = 0.5
+            camera.CameraType = Enum.CameraType.Custom
+        elseif mode == "2nd" then
+            LocalPlayer.CameraMinZoomDistance = 6
+            LocalPlayer.CameraMaxZoomDistance = 12
+            camera.CameraType = Enum.CameraType.Scriptable
+
+            cameraConnection = RunService.RenderStepped:Connect(function()
+                if currentPerspective == "2nd" and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Head") then
+                    local head = LocalPlayer.Character.Head
+                    camera.CFrame = CFrame.new(head.Position + (head.CFrame.LookVector * 7) + Vector3.new(0, 1.5, 0), head.Position)
+                end
+            end)
+        elseif mode == "3rd" then
+            LocalPlayer.CameraMinZoomDistance = 12
+            LocalPlayer.CameraMaxZoomDistance = 30
+            camera.CameraType = Enum.CameraType.Custom
+        elseif mode == "Normal" then
+            LocalPlayer.CameraMinZoomDistance = 0.5
+            LocalPlayer.CameraMaxZoomDistance = 128
+            camera.CameraType = Enum.CameraType.Custom
+        end
+    end)
+end
+
+-- ESP
+local function toggleESP(state)
+    espEnabled = state
+    if not espEnabled then
+        for _, hl in pairs(espHighlights) do if hl then hl:Destroy() end end
+        espHighlights = {}
+    else
+        RunService.RenderStepped:Connect(function()
+            pcall(function()
+                if not espEnabled then return end
+                for _, player in ipairs(Players:GetPlayers()) do
+                    if player ~= LocalPlayer and player.Character then
+                        if not espHighlights[player] then
+                            local highlight = Instance.new("Highlight")
+                            highlight.FillColor = Color3.fromRGB(0, 170, 255)
+                            highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
+                            highlight.Parent = player.Character
+                            espHighlights[player] = highlight
+                        end
+                    end
+                end
+            end)
+        end)
+    end
+end
+
+-- 📌 3. Chat Commands Listener
+LocalPlayer.Chatted:Connect(function(message)
+    pcall(function()
+        if message:sub(1, 1) ~= ";" and message:sub(1, 1) ~= "/" then return end
+        local cleanMsg = message:sub(2)
+        local args = {}
+        for word in cleanMsg:gmatch("%S+") do table.insert(args, word) end
+        local cmd = args[1] and args[1]:lower() or ""
+        local val = args[2]
+
+        if cmd == "speed" and tonumber(val) then
+            currentSpeed = tonumber(val)
+            isSpeedEnabled = true
+            if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
+                LocalPlayer.Character.Humanoid.WalkSpeed = tonumber(val)
+            end
+        elseif cmd == "jump" and tonumber(val) then
+            currentJump = tonumber(val)
+            isJumpEnabled = true
+            if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
+                LocalPlayer.Character.Humanoid.UseJumpPower = true
+                LocalPlayer.Character.Humanoid.JumpPower = tonumber(val)
+            end
+        elseif cmd == "tp" and val then
+            teleportToPlayer(val)
+        elseif cmd == "noclip" then toggleNoclip(true)
+        elseif cmd == "clip" then toggleNoclip(false)
+        elseif cmd == "infjump" then infJumpEnabled = true
+        elseif cmd == "god" then godModeEnabled = true
+        elseif cmd == "fly" then toggleFly(true)
+        elseif cmd == "unfly" then toggleFly(false)
+        elseif cmd == "fullbright" then toggleFullbright(true)
+        elseif cmd == "spin" then toggleSpinbot(true)
+        elseif cmd == "gravity" then setLowGravity(true)
+        elseif cmd == "rainbow" then toggleRainbow(true)
+        elseif cmd == "invis" then toggleInvisible(true)
+        elseif cmd == "reset" then
+            isSpeedEnabled = false
+            isJumpEnabled = false
+            infJumpEnabled = false
+            godModeEnabled = false
+            toggleFly(false)
+            toggleSpinbot(false)
+            setLowGravity(false)
+            toggleRainbow(false)
+            toggleInvisible(false)
+            stopAllPoses()
+            toggleNoclip(false)
+            if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
+                LocalPlayer.Character.Humanoid.WalkSpeed = 16
+                LocalPlayer.Character.Humanoid.JumpPower = 50
+            end
+        end
+    end)
+end)
+
+-- 📌 4. GUI Construction (Safe Parent Setup)
+local CoreGui = game:GetService("CoreGui")
+local guiParent = pcall(function() return gethui() end) and gethui() or CoreGui
+
+if guiParent:FindFirstChild("FAHubUI") then guiParent.FAHubUI:Destroy() end
+
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "FAHubUI"
+ScreenGui.ResetOnSpawn = false
+ScreenGui.Parent = guiParent
+
+local MainFrame = Instance.new("Frame")
+MainFrame.Name = "MainFrame"
+MainFrame.Size = UDim2.new(0, 480, 0, 400)
+MainFrame.Position = UDim2.new(0.5, -240, 0.4, -200)
+MainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
+MainFrame.BorderSizePixel = 0
+MainFrame.Active = true
+MainFrame.Parent = ScreenGui
+
+Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 10)
+local MainUIStroke = Instance.new("UIStroke")
+MainUIStroke.Color = Color3.fromRGB(0, 170, 255)
+MainUIStroke.Thickness = 2
+MainUIStroke.Parent = MainFrame
+
+-- Top Bar
+local TopBar = Instance.new("Frame")
+TopBar.Size = UDim2.new(1, 0, 0, 35)
+TopBar.BackgroundColor3 = Color3.fromRGB(30, 30, 38)
+TopBar.BorderSizePixel = 0
+TopBar.Parent = MainFrame
+Instance.new("UICorner", TopBar).CornerRadius = UDim.new(0, 10)
+
+local Title = Instance.new("TextLabel")
+Title.Size = UDim2.new(1, -70, 1, 0)
+Title.Position = UDim2.new(0, 12, 0, 0)
+Title.BackgroundTransparency = 1
+Title.Text = "⚡ FA HUB • UNIVERSE FIXED"
+Title.TextColor3 = Color3.fromRGB(0, 170, 255)
+Title.TextSize = 13
+Title.Font = Enum.Font.GothamBold
+Title.TextXAlignment = Enum.TextXAlignment.Left
+Title.Parent = TopBar
+
+local CloseBtn = Instance.new("TextButton")
+CloseBtn.Size = UDim2.new(0, 25, 0, 25)
+CloseBtn.Position = UDim2.new(1, -30, 0, 5)
+CloseBtn.BackgroundColor3 = Color3.fromRGB(220, 50, 50)
+CloseBtn.Text = "X"
+CloseBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+CloseBtn.Font = Enum.Font.GothamBold
+CloseBtn.TextSize = 14
+CloseBtn.Parent = TopBar
+Instance.new("UICorner", CloseBtn).CornerRadius = UDim.new(0, 6)
+
+local MinimizeBtn = Instance.new("TextButton")
+MinimizeBtn.Size = UDim2.new(0, 25, 0, 25)
+MinimizeBtn.Position = UDim2.new(1, -60, 0, 5)
+MinimizeBtn.
